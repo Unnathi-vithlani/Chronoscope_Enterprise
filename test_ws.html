@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CHRONOSCOPE — Criminal Behavior Observatory</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #00ff00;
+            padding: 20px;
+        }
+        h1 { color: #ff4b4b; text-align: center; margin-bottom: 5px; font-size: 24px; }
+        .subtitle { color: #888; text-align: center; margin-bottom: 20px; font-size: 12px; }
+        #status {
+            padding: 12px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            font-weight: bold;
+            text-align: center;
+            font-size: 14px;
+        }
+        .connected { background: #003300; color: #00ff00; border: 1px solid #00ff00; }
+        .error { background: #330000; color: #ff0000; border: 1px solid #ff0000; }
+        .connecting { background: #1a1a00; color: #ffff00; border: 1px solid #ffff00; }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+        .stat-box {
+            border: 1px solid #333;
+            padding: 12px 20px;
+            text-align: center;
+            background: #111;
+            flex: 1;
+            border-radius: 4px;
+        }
+        .stat-label { font-size: 10px; color: #888; text-transform: uppercase; }
+        .stat-value { font-size: 28px; color: #ff4b4b; font-weight: bold; }
+        .threat {
+            border: 1px solid #1a3a1a;
+            margin: 8px 0;
+            padding: 14px;
+            border-radius: 4px;
+            background: #0d1a0d;
+            border-left: 4px solid #00ff00;
+            animation: fadeIn 0.3s ease;
+        }
+        .threat.high { border-left-color: #ff4b4b; }
+        .threat.medium { border-left-color: #ff8c00; }
+        .threat.low { border-left-color: #00ff00; }
+        .threat h3 { color: #ff4b4b; margin-bottom: 8px; font-size: 14px; }
+        .threat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 12px; }
+        .threat-item { color: #aaa; }
+        .threat-item span { color: #00ff00; }
+        .fingerprint { color: #555; font-size: 10px; margin-top: 6px; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        #threat-feed { max-height: 600px; overflow-y: auto; }
+        .section-title { color: #555; font-size: 11px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
+    </style>
+</head>
+<body>
+    <h1>🎯 CHRONOSCOPE Enterprise</h1>
+    <p class="subtitle">Real-Time Criminal Behavior Observatory | Criminological Threat Intelligence</p>
+
+    <div id="status" class="connecting">⏳ Connecting to CHRONOSCOPE...</div>
+
+    <div class="stats">
+        <div class="stat-box">
+            <div class="stat-label">Criminal Profiles</div>
+            <div class="stat-value" id="profile-count">0</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">Mode</div>
+            <div class="stat-value" id="mode" style="font-size:16px; padding-top:6px;">—</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">High Risk</div>
+            <div class="stat-value" id="high-count">0</div>
+        </div>
+    </div>
+
+    <div class="section-title">Live Criminal Profiles</div>
+    <div id="threat-feed"></div>
+
+    <script>
+        // Change localhost to your Render URL when deployed
+        const WS_URL = window.location.hostname === 'localhost'
+            ? 'ws://localhost:8000/ws/live'
+            : `wss://${window.location.hostname}/ws/live`;
+
+        const status = document.getElementById('status');
+        const feed = document.getElementById('threat-feed');
+        const profileCount = document.getElementById('profile-count');
+        const modeDisplay = document.getElementById('mode');
+        const highCount = document.getElementById('high-count');
+        let highRiskCount = 0;
+
+        function connect() {
+            const ws = new WebSocket(WS_URL);
+
+            ws.onopen = () => {
+                status.innerHTML = '✅ Connected — Monitoring Live';
+                status.className = 'connected';
+            };
+
+            ws.onmessage = (e) => {
+                const data = JSON.parse(e.data);
+
+                if (data.type === 'connected') {
+                    profileCount.textContent = data.profiles_tracked;
+                    modeDisplay.textContent = data.mode;
+                }
+                else if (data.type === 'new_threat') {
+                    profileCount.textContent = parseInt(profileCount.textContent) + 1;
+
+                    const profile = data.data.criminal_profile;
+                    const threat = data.data.threat_data;
+
+                    if (profile.risk_level === 'high') {
+                        highRiskCount++;
+                        highCount.textContent = highRiskCount;
+                    }
+
+                    const div = document.createElement('div');
+                    div.className = `threat ${profile.risk_level}`;
+                    div.innerHTML = `
+                        <h3>🦹 ${profile.type}</h3>
+                        <div class="threat-grid">
+                            <div class="threat-item">IP: <span>${threat.ip}</span></div>
+                            <div class="threat-item">Risk: <span>${profile.risk_level.toUpperCase()}</span></div>
+                            <div class="threat-item">Timezone: <span>${profile.timezone}</span></div>
+                            <div class="threat-item">Pattern: <span>${profile.work_pattern}</span></div>
+                            <div class="threat-item">Hours: <span>${profile.operational_hours}</span></div>
+                            <div class="threat-item">Sophistication: <span>${profile.sophistication}</span></div>
+                            <div class="threat-item">Origin: <span>${profile.geographic_origin}</span></div>
+                            <div class="threat-item">Confidence: <span>${threat.confidence}%</span></div>
+                        </div>
+                        <div class="fingerprint">Behavioral ID: ${data.data.fingerprint_id}</div>
+                    `;
+                    feed.prepend(div);
+
+                    // Keep feed manageable
+                    while (feed.children.length > 50) {
+                        feed.removeChild(feed.lastChild);
+                    }
+                }
+            };
+
+            ws.onerror = () => {
+                status.innerHTML = '❌ Connection failed';
+                status.className = 'error';
+            };
+
+            ws.onclose = () => {
+                status.innerHTML = '🔴 Disconnected — Reconnecting in 5s...';
+                status.className = 'error';
+                setTimeout(connect, 5000);
+            };
+        }
+
+        connect();
+    </script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chronoscope-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: chronoscope
+  template:
+    metadata:
+      labels:
+        app: chronoscope
+    spec:
+      containers:
+      - name: api
+        image: chronoscope/enterprise:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: DATABASE_URL
+          value: "sqlite:///data/chronoscope.db"
+        - name: DEMO_MODE
+          value: "True"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chronoscope-service
+spec:
+  selector:
+    app: chronoscope
+  ports:
+  - port: 80
+    targetPort: 8000
+  type: LoadBalancer

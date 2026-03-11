@@ -1,0 +1,1 @@
+"""CHRONOSCOPE Core Module"""

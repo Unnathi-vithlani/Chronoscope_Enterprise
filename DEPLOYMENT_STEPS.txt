@@ -1,0 +1,150 @@
+═══════════════════════════════════════════════════════════════
+  CHRONOSCOPE — DEPLOYMENT INSTRUCTIONS
+  GitHub Push → Render.com Deploy → Publish
+═══════════════════════════════════════════════════════════════
+
+BEFORE ANYTHING — DO THIS FIRST (2 minutes)
+─────────────────────────────────────────────
+1. Go to https://abuseipdb.com → Login → API tab → Regenerate your key
+2. Copy the new key
+3. Open the .env.example file in this folder
+4. Rename it to .env
+5. Replace YOUR_ABUSEIPDB_KEY_HERE with your new key
+6. Save
+
+NOTE: .env is in .gitignore — it will NEVER be pushed to GitHub.
+      This is intentional and correct. Keep your key private.
+
+
+STEP 1 — MOVE FILES TO YOUR COMPUTER
+──────────────────────────────────────
+1. Extract this zip folder anywhere on your computer
+   Suggested location: C:\Users\unnat\chronoscope
+
+2. Open PowerShell and navigate there:
+   cd C:\Users\unnat\chronoscope
+
+
+STEP 2 — SET UP GITHUB REPO
+─────────────────────────────
+1. Go to https://github.com/Unnathi-vithlani
+2. Click "New repository"
+3. Name it: chronoscope
+4. Set to PUBLIC
+5. Do NOT check "Add README" (we already have one)
+6. Click "Create repository"
+
+Now in PowerShell, run these commands ONE BY ONE:
+
+   git init
+   git add .
+   git status
+
+   ← Look at the list. Make sure .env is NOT in the list.
+   ← If .env appears, stop and message me before continuing.
+
+   git commit -m "CHRONOSCOPE Enterprise v2.0.0 - Real-Time Criminal Behavior Observatory"
+   git branch -M main
+   git remote add origin https://github.com/Unnathi-vithlani/chronoscope.git
+   git push -u origin main
+
+   ← It will ask for your GitHub username and password.
+   ← Use your GitHub username + a Personal Access Token (not your password).
+   ← Get token at: https://github.com/settings/tokens → Generate new token → check "repo"
+
+
+STEP 3 — DEPLOY TO RENDER.COM
+───────────────────────────────
+1. Go to https://dashboard.render.com
+2. Sign up / log in with your GitHub account
+3. Click "New +" → "Web Service"
+4. Click "Connect" next to: Unnathi-vithlani/chronoscope
+5. Fill in:
+   - Name:        chronoscope-enterprise
+   - Environment: Docker
+   - Branch:      main
+   - Plan:        Free
+6. Scroll down to "Environment Variables" → Add:
+   - Key: DEMO_MODE    Value: True
+   - Key: ENVIRONMENT  Value: production
+7. Click "Create Web Service"
+8. Wait 3–5 minutes for build to complete
+
+Your live URL will be:
+https://chronoscope-enterprise.onrender.com
+
+
+STEP 4 — VERIFY IT'S WORKING
+──────────────────────────────
+Open these URLs in your browser:
+
+API Status:
+https://chronoscope-enterprise.onrender.com/
+
+Live Profiles:
+https://chronoscope-enterprise.onrender.com/threats/live
+
+API Docs:
+https://chronoscope-enterprise.onrender.com/docs
+
+Live Dashboard:
+Open test_ws.html in your browser
+(it will auto-connect to your Render URL)
+
+
+STEP 5 — UPDATE README WITH YOUR LIVE URL
+───────────────────────────────────────────
+1. Open README.md
+2. Find: https://chronoscope-enterprise.onrender.com
+3. Replace with your actual Render URL if different
+4. Save and push:
+
+   git add README.md
+   git commit -m "Add live demo URL"
+   git push
+
+
+STEP 6 — PUBLISH THE ARTICLE
+──────────────────────────────
+Only do this AFTER your Render URL is live and working.
+
+ORDER:
+1. LinkedIn Article first (no approval needed, live in minutes)
+   → Go to linkedin.com → Write article → Paste article text → Publish
+   → Add your GitHub + Render URLs at the bottom
+
+2. Towards Data Science / Medium (takes 1–2 weeks for review)
+   → medium.com → Join Partner Program → Submit to TDS publication
+   → Same article, add your live links
+
+3. LinkedIn POST (short teaser, link to your article in first comment)
+   → Post the teaser written for you, link to LinkedIn Article in comment
+
+4. Dark Reading pitch email
+   → darkreading@informa.com
+   → Subject: Article Pitch — Criminological Behavioral Profiling for Threat Intelligence
+   → One paragraph pitch + link to your published LinkedIn article as writing sample
+
+
+IMPORTANT NOTES
+────────────────
+- Render free tier sleeps after 15 min of no traffic
+  → First load after sleep takes ~30 seconds — this is normal
+  → For demos/presentations, open the URL 2 minutes early
+
+- Demo mode is ON by default (DEMO_MODE=True)
+  → Shows 5 pre-profiled threat actors immediately
+  → No API key needed for demo mode to work
+
+- To switch to live AbuseIPDB data:
+  → In Render dashboard → Environment Variables → Change DEMO_MODE to False
+  → Add ABUSEIPDB_KEY with your key
+  → Redeploy
+
+
+QUESTIONS?
+───────────
+If anything fails, note the exact error message and where it happened.
+Every error has a fix — nothing here is unfixable.
+
+═══════════════════════════════════════════════════════════════
